@@ -11,6 +11,8 @@ const mongoose = require('mongoose');
 const games = mongoose.model('GameData');
 const router = express.Router();
 const uuidv4 = require('uuid/v4');
+const { body, validationResult } = require('express-validator/check');
+
 
 // Opening scenarios.json file to get game scenarios
 const gameData = fs.readFileSync('scenarios.json');
@@ -90,28 +92,34 @@ RETURN:
   comes accross a failure, they are shown a failure message.
 */
 
-router.post('/game/:id', (req, res) => {
-  games.findOne({ id: req.params.id } )
-    .then((game) => {
-      const choice = scenarios[game.scenario]["nodes"][game.currentStep]["choices"][Number(req.body.choiceIndex)];
-      const next = choice['goto'];
-      const reason = choice['reason'];
-      if (next === "failure") {
-        res.render("failure", {"title":"BandersGuru: Try Again!", reason:reason});
-      } else if (next === "success") {
-        res.send(reason); 
-      } else {  
-        const choices = scenarios[game.scenario]["nodes"][next]["choices"];
-        game.currentStep = next;
-        game.choices = choices;
-        game.reason = reason;
-        game.save();
-        res.redirect('http://localhost:8080/game/' + game.id);
-      };
-    })
-    .catch(() => {
-      res.send('Something went wrong');
-    });
+router.post('/game/:id', [ body('choiceIndex').isLength({ min: 1 }),], (req, res) => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) {
+    games.findOne({ id: req.params.id } )
+      .then((game) => {
+        const choice = scenarios[game.scenario]["nodes"][game.currentStep]["choices"][Number(req.body.choiceIndex)];
+        const next = choice['goto'];
+        const reason = choice['reason'];
+        if (next === "failure") {
+          res.render("failure", {"title":"BandersGuru: Try Again!", reason:reason});
+        } else if (next === "success") {
+          res.render("success", {"title":"BandersGuru: Congrats!", reason:reason}); 
+        } else {  
+          const choices = scenarios[game.scenario]["nodes"][next]["choices"];
+          game.currentStep = next;
+          game.choices = choices;
+          game.reason = reason;
+          game.save();
+          //res.redirect('http://localhost:8080/game/' + game.id);
+          res.redirect('/game/' + game.id);
+        };
+      })
+      .catch(() => {
+        res.send('Something went wrong');
+      });
+  } else {
+    res.send('Something went wrong');
+  }
 });
 
 module.exports = router;
