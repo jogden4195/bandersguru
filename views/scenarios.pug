@@ -1,13 +1,12 @@
 extends layout
 
 block content
-    div(class="container")
-        h3 Please enter your name and click on the New Game button.
-        form(action="/game" method="POST")
-            div(class="form-group center-block")
-                label(for="scenario")
-                input(value="BandersGuru" type="hidden" id="scenario" name="scenario")
-            div(class="form-group center-block")
-                label(class="col-sm-2 col-form-label" for="name") Name: 
-                input(class="col-sm-2" type="text" id="name" name="name" placeholder="Your name")
-            input(class="btn btn-primary mb-2" type="submit" value="New Game")
+    h3 Please enter your name and click on the New Game button.
+    form(action="/game" method="POST")
+        div(class="form-group center-block")
+            label(for="scenario")
+            input(value="BandersGuru" type="hidden" id="scenario" name="scenario")
+        div(class="form-group center-block")
+            label(class="col-sm-2 col-form-label" for="name") Name: 
+            input(class="col-sm-2" type="text" id="name" name="name" placeholder="Your name")
+        input(class="btn btn-primary mb-2" type="submit" value="New Game")

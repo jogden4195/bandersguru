@@ -1,19 +1,18 @@
 extends layout
 
 block content
-    div(class="container")
-        if reason
-            h3= `${reason}`
-        h3= `${story}`
-        - var url = '/game/' + id
-        form(action=url method="POST")
-            each val, index in choices
-                div(class="form-check")
-                    - var choiceId = "choice" + index
-                    input(class="form-check-input" type="radio" name="choiceIndex" id=choiceId value=index)
-                    if val.line === "Say \" Hi! I'm #name#."
-                        label(class="form-check-label" for=choiceId)= "Say \"Hi! I'm " +  `${name}` + "\""
-                    else
-                        label(class="form-check-label" for=choiceId)=  val.line
-            input(class="btn btn-lg btn-secondary" type="submit" value="Submit")
+    if reason
+        h3= `${reason}`
+    h3= `${story}`
+    - var url = '/game/' + id
+    form(action=url method="POST")
+        each val, index in choices
+            div(class="form-check")
+                - var choiceId = "choice" + index
+                input(class="form-check-input" type="radio" name="choiceIndex" id=choiceId value=index)
+                if val.line === "Say \" Hi! I'm #name#."
+                    label(class="form-check-label" for=choiceId)= "Say \"Hi! I'm " +  `${name}` + "\""
+                else
+                    label(class="form-check-label" for=choiceId)=  val.line
+        input(class="btn btn-lg btn-secondary" type="submit" value="Submit")
 
