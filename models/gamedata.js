@@ -17,6 +17,10 @@ const gamedataSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    reason: {
+        type: String,
+        trim: true,
+    },
     choices: {
         type: Array,
     }
