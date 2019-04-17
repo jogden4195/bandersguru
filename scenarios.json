@@ -3,7 +3,7 @@
     "summary": "Try to get recruited as a Software Engineer at Carts-Guru!",
     "nodes": {
       "initial": {
-        "line": "You are in front of the Carts-Guru office at 880 Harrison in San Francisco",
+        "story": "You are in front of the Carts-Guru office at 880 Harrison in San Francisco",
         "choices": [
           {
             "line": "Enter the office",
