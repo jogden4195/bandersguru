@@ -1,12 +1,14 @@
+/*
+index.js
+--------
+This file contains all of the necessary routes in order to run this game
+*/
 
 const _ = require('lodash');
 const express = require('express');
-const mongoose = require('mongoose');
-const uuidv4 = require('uuid/v4');
-const router = express.Router();
 const fs = require('fs');
-const games = mongoose.model('GameData');
 const mongoose = require('mongoose');
+const games = mongoose.model('GameData');
 const router = express.Router();
 const uuidv4 = require('uuid/v4');
 
@@ -43,14 +45,16 @@ RETURN:
   */
 
 router.post('/game', (req, res) => {
-  const name = req.params.name;
-  const gameid = uuidv4();       //generate the new game's id
-  const s = req.body.scenarios; 
-  const choices = choicesArr(scenarios[s]['nodes']['initial']['choices']); // create an array of the currentStep's choices (all obj with line key)
+  const name = req.body.name;
+  const gameid = uuidv4();    //generate the new game's id
+  const s = req.body.scenario; 
+  const choices = scenarios[s]['nodes']['initial']['choices']; // create an array of the currentStep's choices (all obj with line key)
   const newGameData = { 'name': name, 'id': gameid, 'scenario': s, 'currentStep': 'initial', 'choices': choices } // obj of game data to be returned
   const newGame = new games(newGameData); // create new game model for Mongo database
   newGame.save()
-    .then(() => { res.send({ "id": gameid, "scenario": s, "currentStep": "initial" }); })
+    .then(() => { 
+      res.redirect('/game/'+ gameid);
+    }) 
     .catch(() => { res.send('Sorry! Something went wrong.'); });
 });
 
@@ -65,8 +69,9 @@ RETURN:
 router.get('/game/:id', (req, res) => {
   games.findOne({ id: req.params.id} ) //Finds the first game in the DB with a matching id
     .then((game) => {
-      const choices = choicesArr(scenarios[game.scenario]["nodes"][game.currentStep]["choices"]); //creates the choices array
-      res.send({ "id": game.id, "scenario": game.scenario, "currentStep": game.currentStep, "choices": choices }) //sends the game's data
+      const story = scenarios[game.scenario]['nodes'][game.currentStep]['story']
+      const choices = scenarios[game.scenario]["nodes"][game.currentStep]["choices"]; //creates the choices array
+      res.render('game', { title: "BandersGuru: Let's Interview!", story: story, choices: choices, id: req.params.id, reason: game.reason, name: game.name}); //sends the game's data
     })
     .catch(() => { 
       res.send('Something went wrong'); 
@@ -74,7 +79,7 @@ router.get('/game/:id', (req, res) => {
 });
 
 /*
-/game/:id POST route
+POST route
 --------------------
 POST route that takes in a choice index and proceeds the game based on where that
 choice leads to
@@ -88,45 +93,25 @@ RETURN:
 router.post('/game/:id', (req, res) => {
   games.findOne({ id: req.params.id } )
     .then((game) => {
-      const choice = scenarios[game.scenario]["nodes"][game.currentStep]["choices"][req.body.choiceIndex]
+      const choice = scenarios[game.scenario]["nodes"][game.currentStep]["choices"][Number(req.body.choiceIndex)];
       const next = choice['goto'];
+      const reason = choice['reason'];
       if (next === "failure") {
-        const reason = choice['reason'];
-        res.send(reason + ' Sorry, no job for you :(');
+        res.render("failure", {"title":"BandersGuru: Try Again!", reason:reason});
+      } else if (next === "success") {
+        res.send(reason); 
       } else {  
-        const choices = choicesArr(scenarios[game.scenario]["nodes"][next]["choices"]);
+        const choices = scenarios[game.scenario]["nodes"][next]["choices"];
         game.currentStep = next;
         game.choices = choices;
+        game.reason = reason;
         game.save();
-        res.send({ "id": game.id, "scenario": game.scenario, "currentStep": game.currentStep, "choices": choices });
+        res.redirect('http://localhost:8080/game/' + game.id);
       };
     })
     .catch(() => {
       res.send('Something went wrong');
     });
 });
-
-/*
-ChoicesArr
-----------
-Creates an array of choice objects with only the 'line' key
-PARAMS:
-  choices - (arr) an array of choice objects with all keys included
-RETURN:
-  a new array with the edited objects
-*/
-
-function choicesArr (choices) {
-  const newArr = [];
-  choices.forEach(function(entry) {
-    let c = _.pick(entry, 'line');
-    newArr.push(c);
-  });
-  return newArr;
-};
-
-// router.post('/game', (req, res) => {
-//   res.render('form', {title: req.params.scenario, id: req.params.id, scenario: req.params.scenario, currentStep: req.params.nodes});
-// });
 
 module.exports = router;
